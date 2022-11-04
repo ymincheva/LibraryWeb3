@@ -1,28 +1,26 @@
-import type { Web3Provider } from "@ethersproject/providers";
-import { useWeb3React } from "@web3-react/core";
-import { useEffect, useState } from "react";
-import useBooksLibraryContract from "../hooks/useBooksLibraryContract";
-import DataTable from "react-data-table-component";
+import { useEffect, useState } from 'react';
+import useBooksLibraryContract from '../hooks/useBooksLibraryContract';
 
 type BooksLibraryContract = {
   contractAddress: string;
 };
 
 const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
-  const { account, library } = useWeb3React<Web3Provider>();
-  const usBooksLibraryContract = useBooksLibraryContract(contractAddress);
-  const [nameBook, setBook] = useState<string | undefined>();
-  const [copies, setCopies] = useState<number | undefined>();
-  const [loading, setLoading] = useState(false);
+  const libraryContract = useBooksLibraryContract(contractAddress);
+
+  const [bookName, setBookName] = useState<string>('');
+  const [bookCopies, setBookCopies] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [books, setBooks] = useState([]);
 
   async function getBooksData() {
-    const currentBookId = await usBooksLibraryContract.currentBookId();
+    setLoading(true);
+    const currentBookId = await libraryContract.currentBookId();
     const bookCount = Number(currentBookId.toString());
     const books = [];
-    setLoading(true);
 
     for (let i = 0; i < bookCount; i++) {
-      const currentBook = await usBooksLibraryContract.BookLedger(i);
+      const currentBook = await libraryContract.BookLedger(i);
 
       books.push({
         name: currentBook.name,
@@ -37,74 +35,92 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
     getBooksData();
   }, []);
 
-  const [books, setBooks] = useState([]);
-
-  const stateInput = (input) => {
-    setBook(input.target.value);
+  const resetForm = async () => {
+    setBookName('');
+    setBookCopies(0);
   };
 
-  const resetForm = async () => {};
-
-  const columns = [
-    {
-      name: "Name",
-      selector: "name",
-      sortable: true,
-    },
-    {
-      name: "Copies",
-      selector: "copies",
-      sortable: true,
-    },
-  ];
-
-  const bookNameInput = (input) => {
-    setBook(input.target.value);
+  const handleBookNameInput = e => {
+    setBookName(e.target.value);
   };
 
-  const copiesInput = (input) => {
-    setCopies(input.target.value);
+  const handleCopiesInput = e => {
+    setBookCopies(e.target.value);
   };
 
   const submitStateResults = async () => {
-    const result: any = [nameBook, copies];
+    setLoading(true);
+    try {
+      const tx = await libraryContract.addBook(bookName, bookCopies);
+      await tx.wait();
 
-    const tx = await usBooksLibraryContract.addBook(nameBook, copies);
-    await tx.wait();
-    // resetForm();
-    // getBooksData();
+      resetForm();
+      getBooksData();
+    } catch (e) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderBookTable = () => {
+    const tableRows = books.map((book, index) => (
+      <tr key={index}>
+        <td>{book.name}</td>
+        <td className="text-end">{book.copies}</td>
+      </tr>
+    ));
+    return (
+      <table className="table">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th className="text-end" scope="col">
+              Copies
+            </th>
+          </tr>
+        </thead>
+        <tbody>{tableRows}</tbody>
+      </table>
+    );
   };
 
   return (
-    <div className="results-form">
-      <form>
-        <DataTable title="Books" columns={columns} data={books} />
-      </form>
-      {loading && <div style={{ color: `green` }}>Loading books....</div>}
-      <form>
-        <label>
-          Book:
-          <input
-            onChange={bookNameInput}
-            value={nameBook}
-            type="text"
-            name="nameBook"
-          />
-        </label>
-
-        <label>
-          Copies:
-          <input
-            onChange={copiesInput}
-            value={copies}
-            type="number"
-            name="copies"
-          />
-        </label>
-        <div className="button-wrapper">
-          <button onClick={submitStateResults}>Add book</button>
+    <div className="mt-5">
+      <h3>Book list</h3>
+      {loading ? (
+        <div className="my-4" style={{ color: `green` }}>
+          Loading books...
         </div>
-      </form>
+      ) : books.length > 0 ? (
+        renderBookTable()
+      ) : (
+        <div style={{ color: `blue` }}>No books</div>
+      )}
+
+      <div className="mt-5">
+        <h3>Add new book</h3>
+        <p className="mb-2 mt-4">Book name:</p>
+        <input
+          className="form-control"
+          onChange={handleBookNameInput}
+          value={bookName}
+          type="text"
+        />
+
+        <p className="mb-2 mt-3">Copies:</p>
+        <input
+          className="form-control"
+          onChange={handleCopiesInput}
+          value={bookCopies}
+          type="number"
+        />
+
+        <div className="button-wrapper mt-3">
+          <button className="btn btn-primary" onClick={submitStateResults}>
+            Add book
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,26 +1,27 @@
-import { useWeb3React } from "@web3-react/core";
-import Head from "next/head";
-import Link from "next/link";
-import Account from "../components/Account";
-import NativeCurrencyBalance from "../components/NativeCurrencyBalance";
-import TokenBalance from "../components/TokenBalance";
-//import USLibrary from "../components/USLibrary";
-import BooksLibrary from "../components/BooksLibrary";
-import { ALBT_TOKEN_ADDRESS, BOOK_LIBRARY_ADDRESS } from "../constants";
-import useEagerConnect from "../hooks/useEagerConnect";
+import { useWeb3React } from '@web3-react/core';
+import Head from 'next/head';
+import Link from 'next/link';
+import Account from '../components/Account';
+import BooksLibrary from '../components/BooksLibrary';
+import { BOOK_LIBRARY_ADDRESS } from '../constants';
+import useEagerConnect from '../hooks/useEagerConnect';
 
 function Home() {
   const { account, library } = useWeb3React();
 
   const triedToEagerConnect = useEagerConnect();
 
-  const isConnected = typeof account === "string" && !!library;
+  const isConnected = typeof account === 'string' && !!library;
 
   return (
-    <div>
+    <div className="container py-4">
       <Head>
         <title>LimeAcademy-boilerplate</title>
         <link rel="icon" href="/favicon.ico" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+        />
       </Head>
 
       <header>
@@ -35,10 +36,8 @@ function Home() {
 
       <main>
         <h1>
-          Welcome to{" "}
-          <a href="https://github.com/LimeChain/next-web3-boilerplate">
-            LimeAcademy-boilerplate
-          </a>
+          Welcome to{' '}
+          <a href="https://github.com/LimeChain/next-web3-boilerplate">LimeAcademy-boilerplate</a>
         </h1>
 
         {isConnected && (
@@ -52,10 +51,6 @@ function Home() {
         nav {
           display: flex;
           justify-content: space-between;
-        }
-
-        main {
-          text-align: center;
         }
       `}</style>
     </div>

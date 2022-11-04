@@ -1,25 +1,20 @@
-import { useWeb3React } from "@web3-react/core";
-import { UserRejectedRequestError } from "@web3-react/injected-connector";
-import { useEffect, useState } from "react";
-import { injected, walletConnect } from "../connectors";
-import useENSName from "../hooks/useENSName";
-import useMetaMaskOnboarding from "../hooks/useMetaMaskOnboarding";
-import { formatEtherscanLink, shortenHex } from "../util";
+import { useWeb3React } from '@web3-react/core';
+import { UserRejectedRequestError } from '@web3-react/injected-connector';
+import { useEffect, useState } from 'react';
+import { injected, walletConnect } from '../connectors';
+import useENSName from '../hooks/useENSName';
+import useMetaMaskOnboarding from '../hooks/useMetaMaskOnboarding';
+import { formatEtherscanLink, shortenHex } from '../util';
 
 type AccountProps = {
   triedToEagerConnect: boolean;
 };
 
 const Account = ({ triedToEagerConnect }: AccountProps) => {
-  const { active, error, activate, deactivate, chainId, account, setError } =
-    useWeb3React();
+  const { active, error, activate, deactivate, chainId, account, setError } = useWeb3React();
 
-  const {
-    isMetaMaskInstalled,
-    isWeb3Available,
-    startOnboarding,
-    stopOnboarding,
-  } = useMetaMaskOnboarding();
+  const { isMetaMaskInstalled, isWeb3Available, startOnboarding, stopOnboarding } =
+    useMetaMaskOnboarding();
 
   // manage connecting state for injected connector
   const [connecting, setConnecting] = useState(false);
@@ -40,7 +35,7 @@ const Account = ({ triedToEagerConnect }: AccountProps) => {
     return null;
   }
 
-  if (typeof account !== "string") {
+  if (typeof account !== 'string') {
     return (
       <div>
         {isWeb3Available ? (
@@ -49,7 +44,7 @@ const Account = ({ triedToEagerConnect }: AccountProps) => {
             onClick={() => {
               setConnecting(true);
 
-              activate(injected, undefined, true).catch((error) => {
+              activate(injected, undefined, true).catch(error => {
                 // ignore the error if it's a user rejected request
                 if (error instanceof UserRejectedRequestError) {
                   setConnecting(false);
@@ -59,17 +54,20 @@ const Account = ({ triedToEagerConnect }: AccountProps) => {
               });
             }}
           >
-            {isMetaMaskInstalled ? "Connect to MetaMask" : "Connect to Wallet"}
+            {isMetaMaskInstalled ? 'Connect to MetaMask' : 'Connect to Wallet'}
           </button>
-          
         ) : (
-          <button onClick={startOnboarding}>Install Metamask</button>
+          <button className="btn btn-primary" onClick={startOnboarding}>
+            Install Metamask
+          </button>
         )}
-        {(<button
+        {
+          <button
+            className="btn btn-primary"
             disabled={connecting}
             onClick={async () => {
               try {
-                await activate(walletConnect(), undefined, true)
+                await activate(walletConnect(), undefined, true);
               } catch (e) {
                 if (error instanceof UserRejectedRequestError) {
                   setConnecting(false);
@@ -77,38 +75,41 @@ const Account = ({ triedToEagerConnect }: AccountProps) => {
                   setError(error);
                 }
               }
-            }}>
+            }}
+          >
             Wallet Connect
-          </button>)
+          </button>
         }
       </div>
     );
   }
 
   return (
-    <>
+    <div className="">
+      <div className="d-flex align-items-center">
         <a
-      {...{
-        href: formatEtherscanLink("Account", [chainId, account]),
-        target: "_blank",
-        rel: "noopener noreferrer",
-      }}
-    >
-      {ENSName || `${shortenHex(account, 4)}`}
-    </a>
-    <button
+          {...{
+            href: formatEtherscanLink('Account', [chainId, account]),
+            target: '_blank',
+            rel: 'noopener noreferrer',
+          }}
+        >
+          {ENSName || `${shortenHex(account, 4)}`}
+        </a>
+        <button
+          className="btn btn-primary ms-3"
           onClick={async () => {
             try {
-              await deactivate()
-            } catch (e) { 
+              await deactivate();
+            } catch (e) {
               setError(error);
             }
-          }}>
+          }}
+        >
           Disconnect
         </button>
-    </>
-   
-    
+      </div>
+    </div>
   );
 };
 
