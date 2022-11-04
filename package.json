@@ -23,7 +23,6 @@
     "@web3-react/walletconnect-connector": "^6.2.8",
     "next": "12.0.2",
     "react": "17.0.2",
-    "react-data-table-component": "^7.5.3",
     "react-dom": "17.0.2",
     "swr": "^1.0.1"
   },
