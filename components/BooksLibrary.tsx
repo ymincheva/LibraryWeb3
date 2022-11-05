@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import useBooksLibraryContract from '../hooks/useBooksLibraryContract';
 import { useForm } from 'react-hook-form';
+import Select from 'react-select';
 
 type BooksLibraryContract = {
   contractAddress: string;
@@ -11,6 +12,7 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
 
   const [bookName, setBookName] = useState<string>('');
   const [bookCopies, setBookCopies] = useState<number>(0);
+  const [bookId, setBookId] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState([]);
   const [error, setError] = useState({});
@@ -20,6 +22,13 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
     handleSubmit,
   } = useForm();
   const onSubmit = data => console.log(data);
+
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const handleChange = event => {
+    setBookId(event.target.value);
+    console.log(event.target.value);
+  };
 
   async function getBooksData() {
     setLoading(true);
@@ -31,6 +40,7 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
       const currentBook = await libraryContract.BookLedger(i);
 
       books.push({
+        id: i,
         name: currentBook.name,
         copies: Number(currentBook.copies),
       });
@@ -87,6 +97,17 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
       getBooksData();
     } catch (e) {
       setError(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitBorrowResults = async () => {
+    setLoading(true);
+    try {
+      const tx = await libraryContract.borrowBook(bookId);
+      await tx.wait();
+    } catch (e) {
     } finally {
       setLoading(false);
     }
@@ -151,6 +172,21 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
         <div className="button-wrapper mt-3">
           <button className="btn btn-primary" onClick={submitStateResults}>
             Add book
+          </button>
+        </div>
+
+        <div className="button-wrapper mt-3">
+          <select onChange={handleChange} name="books" id="books-select">
+            {books.map((book, index) => (
+              <option key={index} value={book.id}>
+                {book.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="button-wrapper mt-3">
+          <button className="btn btn-primary" onClick={submitBorrowResults}>
+            Borrow book
           </button>
         </div>
       </div>
