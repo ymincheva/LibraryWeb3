@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import useBooksLibraryContract from '../hooks/useBooksLibraryContract';
+import { useForm } from 'react-hook-form';
 
 type BooksLibraryContract = {
   contractAddress: string;
@@ -12,6 +13,13 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
   const [bookCopies, setBookCopies] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState([]);
+  const [error, setError] = useState({});
+  const {
+    register,
+    formState: { errors },
+    handleSubmit,
+  } = useForm();
+  const onSubmit = data => console.log(data);
 
   async function getBooksData() {
     setLoading(true);
@@ -48,15 +56,37 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
     setBookCopies(e.target.value);
   };
 
+  function validate(bookName, copies) {
+    const errors = [];
+
+    if (bookName.length === 0) {
+      errors.push("Name can't be empty");
+    }
+
+    if (copies < 0) {
+      errors.push('Copies of books should be at least 1');
+    }
+
+    return errors;
+  }
+
   const submitStateResults = async () => {
     setLoading(true);
     try {
+      const hasErrors = validate(bookName, bookCopies);
+
+      if (hasErrors.length > 0) {
+        //  setError(hasErrors);
+        //  return;
+      }
+
       const tx = await libraryContract.addBook(bookName, bookCopies);
       await tx.wait();
 
       resetForm();
       getBooksData();
     } catch (e) {
+      setError(e);
     } finally {
       setLoading(false);
     }
@@ -97,15 +127,17 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
         <div style={{ color: `blue` }}>No books</div>
       )}
 
-      <div className="mt-5">
+      <div className="mt-5" onSubmit={handleSubmit(onSubmit)}>
         <h3>Add new book</h3>
         <p className="mb-2 mt-4">Book name:</p>
-        <input
+        {/*   <input
           className="form-control"
           onChange={handleBookNameInput}
           value={bookName}
           type="text"
-        />
+        /> */}
+        <input {...register('bookName', { required: true })} />
+        {errors.bookName?.type === 'required' && <p role="alert">Bookname is required</p>}
 
         <p className="mb-2 mt-3">Copies:</p>
         <input
@@ -113,6 +145,7 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
           onChange={handleCopiesInput}
           value={bookCopies}
           type="number"
+          /*      {...register('bookCopies', { min: 1, max: 99 })} */
         />
 
         <div className="button-wrapper mt-3">
