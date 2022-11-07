@@ -16,6 +16,9 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState([]);
   const [error, setError] = useState({});
+  const disabledBook = !(bookName.length > 0);
+  const disabledBookCopies = !(bookCopies > 0);
+
   const {
     register,
     formState: { errors },
@@ -66,28 +69,13 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
     setBookCopies(e.target.value);
   };
 
-  function validate(bookName, copies) {
-    const errors = [];
-
-    if (bookName.length === 0) {
-      errors.push("Name can't be empty");
-    }
-
-    if (copies < 0) {
-      errors.push('Copies of books should be at least 1');
-    }
-
-    return errors;
-  }
-
   const submitStateResults = async () => {
     setLoading(true);
     try {
-      const hasErrors = validate(bookName, bookCopies);
-
-      if (hasErrors.length > 0) {
-        //  setError(hasErrors);
-        //  return;
+      console.log(disabledBook);
+      console.log(disabledBookCopies);
+      if (disabledBook || disabledBookCopies) {
+        return;
       }
 
       const tx = await libraryContract.addBook(bookName, bookCopies);
@@ -107,6 +95,7 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
     try {
       const tx = await libraryContract.borrowBook(bookId);
       await tx.wait();
+      getBooksData();
     } catch (e) {
     } finally {
       setLoading(false);
@@ -151,14 +140,15 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
       <div className="mt-5" onSubmit={handleSubmit(onSubmit)}>
         <h3>Add new book</h3>
         <p className="mb-2 mt-4">Book name:</p>
-        {/*   <input
-          className="form-control"
-          onChange={handleBookNameInput}
-          value={bookName}
-          type="text"
-        /> */}
-        <input {...register('bookName', { required: true })} />
-        {errors.bookName?.type === 'required' && <p role="alert">Bookname is required</p>}
+        {
+          <input
+            className="form-control"
+            onChange={handleBookNameInput}
+            value={bookName}
+            type="text"
+          />
+        }
+        {disabledBook ? <div style={{ color: `red` }}>Bookname is required</div> : null}
 
         <p className="mb-2 mt-3">Copies:</p>
         <input
@@ -166,8 +156,8 @@ const BooksLibrary = ({ contractAddress }: BooksLibraryContract) => {
           onChange={handleCopiesInput}
           value={bookCopies}
           type="number"
-          /*      {...register('bookCopies', { min: 1, max: 99 })} */
         />
+        {disabledBookCopies ? <div style={{ color: `red` }}>Copies is required</div> : null}
 
         <div className="button-wrapper mt-3">
           <button className="btn btn-primary" onClick={submitStateResults}>
